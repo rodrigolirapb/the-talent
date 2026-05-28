@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Talent — Surge</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#f0eff5;min-height:100vh}
+  :root{
+    --surge-purple:#7F77DD;--surge-purple-light:#CECBF6;--surge-purple-dark:#3C3489;
+    --bg:#0a0a0f;--bg2:#12111a;--bg3:#1a1928;--card:#1e1d2e;--border:#2e2d45;
+    --text:#f0eff5;--muted:#9896b8;--accent:#AFA9EC
+  }
+  .hero{background:linear-gradient(135deg,#12111a 0%,#1a1928 100%);border-bottom:1px solid var(--border);padding:28px 40px 24px}
+  .hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-badge{width:36px;height:36px;border-radius:8px;background:var(--surge-purple);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff}
+  .logo-text{font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.3px}
+  .logo-sub{font-size:12px;color:var(--muted);margin-top:1px}
+  .cta-btn{background:var(--surge-purple);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.2px}
+  .cta-btn:hover{background:#9490E8}
+  .hero-title{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--text);margin-bottom:6px}
+  .hero-title span{color:var(--surge-purple-light)}
+  .hero-desc{font-size:14px;color:var(--muted);max-width:600px;line-height:1.6}
+  .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
+  .stat-num{font-size:26px;font-weight:700;color:var(--surge-purple-light);letter-spacing:-0.5px}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:3px}
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:0;min-height:calc(100vh - 280px)}
+  .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 20px}
+  .sidebar h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px}
+  .filter-group{margin-bottom:24px}
+  .filter-label{font-size:13px;color:var(--muted);margin-bottom:8px;display:block}
+  .chip-group{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:5px 11px;border-radius:20px;border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;background:transparent;transition:all .15s}
+  .chip:hover,.chip.active{background:var(--surge-purple);border-color:var(--surge-purple);color:#fff}
+  .chip.active{font-weight:600}
+  .results-count{font-size:13px;color:var(--muted);margin-bottom:16px;padding:0 24px;padding-top:24px}
+  .results-count span{color:var(--surge-purple-light);font-weight:600}
+  .main{background:var(--bg3);overflow-y:auto}
+  .tabs{display:flex;gap:2px;padding:0 24px;padding-top:24px;border-bottom:1px solid var(--border);margin-bottom:0}
+  .tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--surge-purple-light);border-bottom-color:var(--surge-purple)}
+  .tab-content{display:none;padding:24px}
+  .tab-content.active{display:block}
+  .section-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .section-title i{color:var(--surge-purple);font-size:16px}
+  #map{width:100%;height:400px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+  .chart-title i{color:var(--surge-purple);font-size:15px}
+  .chart-wrap{position:relative}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .heatmap-label{font-size:10px;color:var(--muted);text-align:center;margin-bottom:6px}
+  .heatmap-row{display:contents}
+  .heatmap-cell{height:36px;border-radius:4px;position:relative}
+  .heatmap-cell:hover .tooltip{display:block}
+  .tooltip{display:none;position:absolute;bottom:calc(100%+6px);left:50%;transform:translateX(-50%);background:#2e2d45;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--text);white-space:nowrap;z-index:100}
+  .legend{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--muted)}
+  .legend-bar{display:flex;gap:2px}
+  .legend-swatch{width:20px;height:8px;border-radius:2px}
+  .zone-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:20px}
+  .zone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .zone-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+  .zone-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+  .zone-count{font-size:22px;font-weight:700;color:var(--surge-purple-light)}
+  .zone-pct{font-size:11px;color:var(--muted);margin-top:2px}
+  .footer{background:var(--bg2);border-top:1px solid var(--border);padding:32px 40px;display:flex;align-items:center;justify-content:space-between}
+  .footer-text h4{font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px}
+  .footer-text p{font-size:13px;color:var(--muted)}
+  .footer-cta{background:var(--surge-purple);color:#fff;border:none;padding:13px 28px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.2px}
+  .footer-cta:hover{background:#9490E8}
+  select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;width:100%;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <div class="logo">
+      <div class="logo-badge">S</div>
+      <div>
+        <div class="logo-text">Surge by Nrolled</div>
+        <div class="logo-sub">On-Demand Staffing</div>
+      </div>
+    </div>
+    <button class="cta-btn" onclick="document.querySelector('.footer').scrollIntoView({behavior:'smooth'})">Schedule a POC</button>
+  </div>
+  <div class="hero-title">Meet <span>The Talent</span></div>
+  <div class="hero-desc">Explore our verified workforce across the GTA — anonymized by design, powerful by data. Filter by role, zone, and availability to find the talent density that fits your next event.</div>
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-num" id="stat-workers">1,847</div><div class="stat-label">Active workers</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-zones">18</div><div class="stat-label">GTA zones covered</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-hours">124K</div><div class="stat-label">Hours logged (last 90d)</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-skills">24</div><div class="stat-label">Skill categories</div></div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <h3>Filters</h3>
+    <div class="filter-group">
+      <span class="filter-label"><i class="ti ti-briefcase" style="font-size:13px;margin-right:4px" aria-hidden="true"></i>Role category</span>
+      <div class="chip-group" id="role-chips">
+        <div class="chip active" data-val="all">All roles</div>
+        <div class="chip" data-val="bartender">Bartender</div>
+        <div class="chip" data-val="server">Server</div>
+        <div class="chip" data-val="barista">Barista</div>
+        <div class="chip" data-val="host">Host/Greeter</div>
+        <div class="chip" data-val="events">Event Staff</div>
+        <div class="chip" data-val="kitchen">Kitchen</div>
+        <div class="chip" data-val="security">Security</div>
+        <div class="chip" data-val="promo">Promo</div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="ti ti-map-pin" style="font-size:13px;margin-right:4px" aria-hidden="true"></i>GTA zone</span>
+      <div class="chip-group" id="zone-chips">
+        <div class="chip active" data-val="all">All zones</div>
+        <div class="chip" data-val="downtown">Downtown</div>
+        <div class="chip" data-val="midtown">Midtown</div>
+        <div class="chip" data-val="eastend">East End</div>
+        <div class="chip" data-val="westend">West End</div>
+        <div class="chip" data-val="etobicoke">Etobicoke</div>
+        <div class="chip" data-val="scarborough">Scarborough</div>
+        <div class="chip" data-val="north">North York</div>
+        <div class="chip" data-val="mississauga">Mississauga</div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="ti ti-award" style="font-size:13px;margin-right:4px" aria-hidden="true"></i>Experience level</span>
+      <div class="chip-group" id="exp-chips">
+        <div class="chip active" data-val="all">All levels</div>
+        <div class="chip" data-val="entry">Entry</div>
+        <div class="chip" data-val="intermediate">Intermediate</div>
+        <div class="chip" data-val="senior">Senior</div>
+        <div class="chip" data-val="veteran">Veteran</div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="ti ti-calendar" style="font-size:13px;margin-right:4px" aria-hidden="true"></i>Availability</span>
+      <div class="chip-group" id="avail-chips">
+        <div class="chip active" data-val="all">Any time</div>
+        <div class="chip" data-val="weekends">Weekends</div>
+        <div class="chip" data-val="evenings">Evenings</div>
+        <div class="chip" data-val="weekdays">Weekdays</div>
+        <div class="chip" data-val="flexible">Flexible</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="results-count">Showing <span id="results-num">1,847</span> workers matching your filters</div>
+    <div class="tabs">
+      <div class="tab active" data-tab="map"><i class="ti ti-map-2" style="margin-right:5px" aria-hidden="true"></i>Map view</div>
+      <div class="tab" data-tab="skills"><i class="ti ti-chart-bar" style="margin-right:5px" aria-hidden="true"></i>Skills</div>
+      <div class="tab" data-tab="experience"><i class="ti ti-award" style="margin-right:5px" aria-hidden="true"></i>Experience</div>
+      <div class="tab" data-tab="hours"><i class="ti ti-clock" style="margin-right:5px" aria-hidden="true"></i>Hours & availability</div>
+    </div>
+
+    <div class="tab-content active" id="tab-map">
+      <div class="section-title"><i class="ti ti-map-2" aria-hidden="true"></i>Worker density across the GTA</div>
+      <div id="map"></div>
+      <div class="zone-panel">
+        <div class="section-title" style="margin-bottom:0"><i class="ti ti-layout-grid" aria-hidden="true"></i>Workers by zone</div>
+        <div class="zone-grid" id="zone-grid"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-skills">
+      <div class="section-title"><i class="ti ti-chart-bar" aria-hidden="true"></i>Skill category breakdown</div>
+      <div class="chart-card">
+        <div class="chart-wrap" style="height:380px">
+          <canvas id="skillsChart" role="img" aria-label="Horizontal bar chart showing worker count by skill category">Workers by skill: Bartender 312, Server 298, Event Staff 256, Barista 187, Host 165, Kitchen 142, Security 118, Promo 98, Other 271.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-experience">
+      <div class="section-title"><i class="ti ti-award" aria-hidden="true"></i>Experience level distribution</div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="ti ti-chart-donut" aria-hidden="true"></i>Overall distribution</div>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="expDonut" role="img" aria-label="Donut chart of experience levels">Entry 22%, Intermediate 38%, Senior 28%, Veteran 12%.</canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="ti ti-chart-bar" aria-hidden="true"></i>Experience by role</div>
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="expByRole" role="img" aria-label="Stacked bar chart of experience levels per role">Stacked bars showing entry, intermediate, senior, veteran proportions per role.</canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-hours">
+      <div class="section-title"><i class="ti ti-clock" aria-hidden="true"></i>Hours logged & availability windows</div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="ti ti-chart-line" aria-hidden="true"></i>Monthly hours logged (last 12 months)</div>
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="hoursChart" role="img" aria-label="Line chart of hours logged per month over 12 months">Monthly hours: Jun 8200, Jul 9100, Aug 10400, Sep 11200, Oct 12800, Nov 14100, Dec 15600, Jan 9800, Feb 8700, Mar 10200, Apr 11900, May 13400.</canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="ti ti-calendar-event" aria-hidden="true"></i>Availability by time slot</div>
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="availChart" role="img" aria-label="Bar chart of worker availability by time slot">Evenings 68%, Weekends 82%, Weekday mornings 34%, Weekday afternoons 41%, Flexible 23%.</canvas>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:20px">
+        <div class="chart-title"><i class="ti ti-calendar-week" aria-hidden="true"></i>Weekly availability heatmap</div>
+        <div id="heatmap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-text">
+    <h4>Ready to staff your next event?</h4>
+    <p>Connect with verified talent across the GTA — on demand, every time.</p>
+  </div>
+  <button class="footer-cta">Schedule a POC</button>
+</div>
+
+<script>
+const zoneData=[
+  {name:'Downtown Core',lat:43.6532,lng:-79.3832,count:342,pct:'18.5%'},
+  {name:'Midtown',lat:43.6890,lng:-79.3945,count:218,pct:'11.8%'},
+  {name:'East End',lat:43.6658,lng:-79.3153,count:187,pct:'10.1%'},
+  {name:'West End',lat:43.6534,lng:-79.4642,count:165,pct:'8.9%'},
+  {name:'North York',lat:43.7615,lng:-79.4111,count:203,pct:'11.0%'},
+  {name:'Etobicoke',lat:43.6205,lng:-79.5132,count:142,pct:'7.7%'},
+  {name:'Scarborough',lat:43.7731,lng:-79.2579,count:134,pct:'7.3%'},
+  {name:'Mississauga',lat:43.5890,lng:-79.6441,count:198,pct:'10.7%'},
+  {name:'Brampton',lat:43.7315,lng:-79.7624,count:112,pct:'6.1%'},
+  {name:'Markham',lat:43.8561,lng:-79.3370,count:89,pct:'4.8%'},
+  {name:'Vaughan',lat:43.8361,lng:-79.4985,count:57,pct:'3.1%'},
+];
+
+const map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([43.7,-79.42],10);
+const tileLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);
+tileLayer.getContainer&&setTimeout(()=>{const c=tileLayer.getContainer();if(c)c.style.filter='invert(1) hue-rotate(180deg) brightness(0.85) saturate(0.7)';},500);
+document.getElementById('map').style.filter='invert(1) hue-rotate(180deg) brightness(0.85) saturate(0.7)';
+setTimeout(()=>{document.getElementById('map').style.filter='';const panes=document.querySelectorAll('.leaflet-tile-pane');panes.forEach(p=>p.style.filter='invert(1) hue-rotate(180deg) brightness(0.85) saturate(0.7)');},800);
+
+zoneData.forEach(z=>{
+  const r=Math.sqrt(z.count)*1.8;
+  const circle=L.circleMarker([z.lat,z.lng],{
+    radius:r,color:'#7F77DD',fillColor:'#7F77DD',fillOpacity:0.55,weight:1.5,opacity:0.9
+  }).addTo(map);
+  circle.bindPopup(`<div style="font-family:system-ui;padding:4px 2px"><strong style="font-size:14px">${z.name}</strong><br><span style="font-size:20px;font-weight:700;color:#7F77DD">${z.count}</span><br><span style="color:#888;font-size:12px">${z.pct} of total workforce</span></div>`);
+});
+
+const zg=document.getElementById('zone-grid');
+zoneData.slice(0,9).forEach(z=>{
+  zg.innerHTML+=`<div class="zone-item"><div class="zone-name">${z.name}</div><div class="zone-count">${z.count}</div><div class="zone-pct">${z.pct} of total</div></div>`;
+});
+
+const skillLabels=['Bartender','Server','Event Staff','Barista','Host / Greeter','Kitchen','Security','Promo / Brand','Audio-Visual','Coat Check','Concierge','Valet'];
+const skillData=[312,298,256,187,165,142,118,98,76,54,43,38];
+new Chart(document.getElementById('skillsChart'),{
+  type:'bar',
+  data:{labels:skillLabels,datasets:[{label:'Workers',data:skillData,backgroundColor:'#7F77DD',borderRadius:5,borderSkipped:false}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#9896b8',font:{size:11}}},y:{grid:{display:false},ticks:{color:'#f0eff5',font:{size:12}}}}}
+});
+
+new Chart(document.getElementById('expDonut'),{
+  type:'doughnut',
+  data:{labels:['Entry','Intermediate','Senior','Veteran'],datasets:[{data:[22,38,28,12],backgroundColor:['#534AB7','#7F77DD','#AFA9EC','#EEEDFE'],borderWidth:0}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#9896b8',font:{size:12},padding:12,usePointStyle:true,pointStyleWidth:10}}}}
+});
+
+new Chart(document.getElementById('expByRole'),{
+  type:'bar',
+  data:{
+    labels:['Bartender','Server','Event','Barista','Host'],
+    datasets:[
+      {label:'Entry',data:[18,25,30,22,28],backgroundColor:'#534AB7',borderRadius:3},
+      {label:'Intermediate',data:[35,38,40,36,39],backgroundColor:'#7F77DD',borderRadius:3},
+      {label:'Senior',data:[30,25,22,28,24],backgroundColor:'#AFA9EC',borderRadius:3},
+      {label:'Veteran',data:[17,12,8,14,9],backgroundColor:'#EEEDFE',borderRadius:3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#9896b8',font:{size:11}}},y:{stacked:true,grid:{color:'rgba(255,255,255,0.06)'},ticks:{color:'#9896b8',font:{size:11},callback:v=>v+'%'}}},plugins:{legend:{labels:{color:'#9896b8',font:{size:11},usePointStyle:true,pointStyleWidth:8}}}}
+});
+
+const months=['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'];
+const hrs=[8200,9100,10400,11200,12800,14100,15600,9800,8700,10200,11900,13400];
+new Chart(document.getElementById('hoursChart'),{
+  type:'line',
+  data:{labels:months,datasets:[{label:'Hours logged',data:hrs,borderColor:'#7F77DD',backgroundColor:'rgba(127,119,221,0.15)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#7F77DD'}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#9896b8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#9896b8',font:{size:11},callback:v=>(v/1000).toFixed(0)+'K'}}}}
+});
+
+new Chart(document.getElementById('availChart'),{
+  type:'bar',
+  data:{labels:['Evenings','Weekends','Wkday PM','Wkday AM','Flexible','Overnight'],datasets:[{label:'Available',data:[68,82,41,34,23,18],backgroundColor:'rgba(127,119,221,0.8)',borderRadius:6,borderSkipped:false}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#9896b8',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#9896b8',font:{size:11},callback:v=>v+'%'},max:100}}}
+});
+
+const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const slots=['Morning','Afternoon','Evening','Late night'];
+const heatData=[[22,25,28,30,38,72,65],[28,30,32,34,42,78,70],[45,48,52,58,74,91,88],[12,14,16,18,32,68,62]];
+const hm=document.getElementById('heatmap');
+const dayRow=document.createElement('div');
+dayRow.style.cssText='display:grid;grid-template-columns:90px repeat(7,1fr);gap:4px;margin-bottom:6px';
+dayRow.innerHTML='<span></span>'+days.map(d=>`<span style="font-size:10px;color:#9896b8;text-align:center">${d}</span>`).join('');
+hm.appendChild(dayRow);
+heatData.forEach((row,si)=>{
+  const r=document.createElement('div');
+  r.style.cssText='display:grid;grid-template-columns:90px repeat(7,1fr);gap:4px;margin-bottom:4px';
+  r.innerHTML=`<span style="font-size:11px;color:#9896b8;align-self:center">${slots[si]}</span>`;
+  row.forEach((v,di)=>{
+    const alpha=0.15+v/100*0.85;
+    const cell=document.createElement('div');
+    cell.style.cssText=`height:36px;border-radius:5px;background:rgba(127,119,221,${alpha.toFixed(2)});position:relative;cursor:default`;
+    cell.title=`${slots[si]}, ${days[di]}: ${v}% available`;
+    r.appendChild(cell);
+  });
+  hm.appendChild(r);
+});
+const leg=document.createElement('div');
+leg.style.cssText='display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11px;color:#9896b8';
+leg.innerHTML='Low availability <span style="display:flex;gap:2px">'+'<span style="width:18px;height:8px;border-radius:2px;background:rgba(127,119,221,0.2)"></span><span style="width:18px;height:8px;border-radius:2px;background:rgba(127,119,221,0.4)"></span><span style="width:18px;height:8px;border-radius:2px;background:rgba(127,119,221,0.6)"></span><span style="width:18px;height:8px;border-radius:2px;background:rgba(127,119,221,0.8)"></span><span style="width:18px;height:8px;border-radius:2px;background:rgba(127,119,221,1)"></span></span> High availability';
+hm.appendChild(leg);
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='map') setTimeout(()=>map.invalidateSize(),100);
+  });
+});
+
+function setupChips(groupId){
+  document.querySelectorAll(`#${groupId} .chip`).forEach(c=>{
+    c.addEventListener('click',()=>{
+      if(c.dataset.val==='all'){
+        document.querySelectorAll(`#${groupId} .chip`).forEach(x=>x.classList.remove('active'));
+        c.classList.add('active');
+      } else {
+        document.querySelector(`#${groupId} .chip[data-val="all"]`).classList.remove('active');
+        c.classList.toggle('active');
+        if(!document.querySelectorAll(`#${groupId} .chip.active`).length)
+          document.querySelector(`#${groupId} .chip[data-val="all"]`).classList.add('active');
+      }
+      updateCount();
+    });
+  });
+}
+['role-chips','zone-chips','exp-chips','avail-chips'].forEach(setupChips);
+
+function updateCount(){
+  const base=1847;
+  let m=1;
+  ['role-chips','zone-chips','exp-chips','avail-chips'].forEach(g=>{
+    const active=document.querySelectorAll(`#${g} .chip.active`);
+    const allSel=[...active].some(c=>c.dataset.val==='all');
+    if(!allSel) m*=0.65+Math.random()*0.25;
+  });
+  document.getElementById('results-num').textContent=Math.round(base*m).toLocaleString();
+}
+</script>
+</body>
+</html>
